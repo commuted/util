@@ -130,6 +130,28 @@ def check_date date
   end
 end
 
+def bump_minor_version
+  package = {}
+  if File.file?("./local_time/package.json")
+    begin
+      package = JSON.parse(IO.read("./local_time/package.json"))
+      $stderr.puts "retrieving package.json version #{package['version']}"
+      ver = package['version'].split(".")
+      package['version'] = "#{ver[0]}.#{ver[1]}.#{ver[2].to_i+1}"
+      IO.write("./local_time/package.json",JSON.pretty_generate(package))
+      $stderr.puts "setting package.json version #{package['version']}"
+      
+    rescue => e
+      $stderr.puts "Error opening package file #{e}"
+      exit(1)
+    end
+  else
+    $stderr.puts "Error cannot find package.json"
+  end
+end
+
+
+
 
 def get_local_coordinated_version
   begin
@@ -138,6 +160,7 @@ def get_local_coordinated_version
     return local
   rescue => e
     $stderr.puts "Error opening current version #{e}"
+    exit(1)
   end
 end
 
@@ -195,6 +218,7 @@ if check_date new_version
     sfin = "var dict = #{JSON.generate(fin)} #{apends}"
     #IO.write("correct_tz.json", JSON.pretty_generate(fin))
     IO.write("./local_time/index.js", sfin)
+    bump_minor_version
     write_coordinated_version new_version
     $stderr.puts "update complete"
     exit(0)
